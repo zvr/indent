@@ -1229,9 +1229,10 @@ if ((((i < 2 &&
 @end group
 @end example
 
-@noindent
-The option @option{-ip@var{N}} can be used to set the extra offset per paren.
-For instance, @option{-ip0} would format the above as:
+@kindex -pi@var{n}
+@kindex --paren-indentation@var{n}
+The option @option{-pi@var{N}} can be used to set the extra offset per paren.
+For instance, @option{-pi0} would format the above as:
 
 @example
 @group
@@ -1280,13 +1281,16 @@ is provided, which is equivalent to @option{-ip0}.
 ANSI C allows white space to be placed on preprocessor command lines
 between the character @samp{#} and the command name.  By default,
 @command{indent} removes this space, but specifying the @option{-lps} option
-directs @command{indent} to leave this space unmodified. The option @option{-ppi} 
-overrides  @option{-nlps} and  @option{-lps}.
+directs @command{indent} to leave this space unmodified.
 
 @kindex -ppi@var{n}
 @kindex --preprocessor-indentation@var{n}
-This option can be used to request that preprocessor conditional statements can
-be indented by to given number of spaces, for example with the option @option{-ppi 3}
+The option @option{-ppi} 
+can be used to request that preprocessor conditional statements can
+be indented by to given number of spaces.
+This option
+overrides  @option{-nlps} and  @option{-lps}.
+For example with the option @option{-ppi 3}
 
 @example
 @group
