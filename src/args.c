@@ -1,11 +1,12 @@
 /** \file
+ * Copyright (c) 2013 Alexios Zavras
+ * 
  * Copyright (c) 1999, 2000 Carlo Wood.  All rights reserved.<br>
  * Copyright (c) 1994 Joseph Arceneaux.  All rights reserved.<br>
  * Copyright (c) 1992, 2002, 2008 Free Software Foundation, Inc. 
  *   All rights reserved.<br>
  *
- * Copyright (c) 1980, 1993
- *	 The Regents of the University of California.<br>
+ * Copyright (c) 1980, 1993 The Regents of the University of California.<br>
  * Copyright (c) 1976 Board of Trustees of the University of Illinois.<br>
  * Copyright (c) 1985 Sun Microsystems, Inc.
  *   All rights reserved.<br>
@@ -96,6 +97,30 @@ RCSTAG_CC ("$Id$");
      "-npcs\0-nprs\0-npsl\0-sai\0-saf\0-saw\0-ncs\0-nsc\0-sob\0-nfca\0-cp33\0-ss\0" \
      "-ts8\0-il1\0"
 
+#define ZVR_SETTINGS_STRING (int *) \
+    "--blank-before-sizeof\0 --blank-lines-after-declarations\0" \
+    "--blank-lines-after-procedures\0 --blank-lines-before-block-comments\0" \
+    "--brace-indent0\0 --braces-after-func-def-line\0" \
+    "--braces-after-if-line\0 --braces-after-struct-decl-line\0" \
+    "--break-after-boolean-operator\0 --case-brace-indentation0\0" \
+    "--case-indentation4\0 --comment-indentation40\0" \
+    "--comment-line-length78\0 --continuation-indentation8\0" \
+    "--continue-at-parentheses\0 --cuddle-do-while\0 --cuddle-else\0" \
+    "--declaration-comment-column35\0 --declaration-indentation0\0" \
+    "--dont-break-function-decl-args\0 --dont-break-function-decl-args-end\0" \
+    "--dont-format-first-column-comments\0 --dont-left-justify-declarations\0" \
+    "--dont-star-comments\0 --else-endif-column12\0" \
+    "--format-all-comments\0 --honour-newlines\0 --indent-label-2\0" \
+    "--indent-level4\0 --line-comments-indentation0\0 --line-length80\0" \
+    "--no-blank-lines-after-commas\0 --no-comment-delimiters-on-blank-lines\0" \
+    "--no-space-after-function-call-names\0 --no-space-after-parentheses\0" \
+    "--parameter-indentation0\0 --paren-indentation4\0" \
+    "--preprocessor-indentation2\0 --preserve-mtime\0" \
+    "--procnames-start-lines\0 --space-after-cast\0 --space-after-for\0" \
+    "--space-after-if\0 --space-after-while\0 --space-special-semicolon\0" \
+    "--struct-brace-indentation0\0 --swallow-optional-blank-lines\0" \
+    "--tab-size8\0 --use-tabs\0"
+
 /**
  * Profile types. These identify what kind of switches and arguments 
  * can be passed to indent, and how to process them.
@@ -148,6 +173,7 @@ static int exp_ce   = 0;
 static int exp_ci   = 0;
 static int exp_cli  = 0;
 static int exp_cp   = 0;
+static int exp_cpf  = 0;
 static int exp_cpp  = 0;
 static int exp_cs   = 0;
 static int exp_d    = 0;
@@ -191,6 +217,7 @@ static int exp_ts   = 0;
 static int exp_ut   = 0;
 static int exp_v    = 0;
 static int exp_version = 0;
+static int exp_zvr  = 0;
 
 /**
  * The following structure is controlled by command line parameters and
@@ -245,6 +272,7 @@ static void usage (void);
 
 const pro_ty pro[] =
 {
+    {"zvr",     PRO_SETTINGS,                           0, ONOFF_NA, ZVR_SETTINGS_STRING,                        &exp_zvr},
     {"version", PRO_PRSTRING,                           0, ONOFF_NA, (int *) VERSION,                            &exp_version},
     {"v",       PRO_BOOL,                           false,       ON, &settings.verbose,                          &exp_v},
     {"ut",      PRO_BOOL,                            true,       ON, &settings.use_tabs,                         &exp_ut},
@@ -289,6 +317,7 @@ const pro_ty pro[] =
     {"neei",    PRO_BOOL,                           false,      OFF, &settings.extra_expression_indent,          &exp_eei},
     {"ndj",     PRO_BOOL,                           false,      OFF, &settings.ljust_decl,                       &exp_dj},
     {"ncs",     PRO_BOOL,                            true,      OFF, &settings.cast_space,                       &exp_cs},
+    {"ncpf",    PRO_BOOL,                            true,      OFF, &settings.chain_profiles,                   &exp_cpf},
     {"nce",     PRO_BOOL,                            true,      OFF, &settings.cuddle_else,                      &exp_ce},
     {"ncdw",    PRO_BOOL,                           false,      OFF, &settings.cuddle_do_while,                  &exp_cdw},
     {"ncdb",    PRO_BOOL,                            true,      OFF, &settings.comment_delimiter_on_blankline,   &exp_cdb},
@@ -321,6 +350,7 @@ const pro_ty pro[] =
     {"di",      PRO_INT,                               16, ONOFF_NA, &settings.decl_indent,                      &exp_di},
     {"d",       PRO_INT,                                0, ONOFF_NA, &settings.unindent_displace,                &exp_d},
     {"cs",      PRO_BOOL,                            true,       ON, &settings.cast_space,                       &exp_cs},
+    {"cpf",     PRO_BOOL,                            true,       ON, &settings.chain_profiles,                   &exp_cpf},
     {"cp",      PRO_INT,                               33, ONOFF_NA, &settings.else_endif_col,                   &exp_cp},
     {"cli",     PRO_INT,                                0, ONOFF_NA, &settings.case_indent,                      &exp_cli},
     {"ci",      PRO_INT,                                4, ONOFF_NA, &settings.continuation_indent,              &exp_ci},
@@ -333,7 +363,7 @@ const pro_ty pro[] =
     {"c",       PRO_INT,                               33, ONOFF_NA, &settings.com_ind,                          &exp_c},
     {"bs",      PRO_BOOL,                           false,       ON, &settings.blank_after_sizeof,               &exp_bs},
     {"brs",     PRO_BOOL,                            true,       ON, &settings.braces_on_struct_decl_line,       &exp_bls},
-    {"brf",     PRO_BOOL,                           false,       ON, &settings.braces_on_func_def_line,		 &exp_blf},
+    {"brf",     PRO_BOOL,                           false,       ON, &settings.braces_on_func_def_line,          &exp_blf},
     {"br",      PRO_BOOL,                            true,       ON, &settings.btype_2,                          &exp_bl},
     {"bls",     PRO_BOOL,                            true,      OFF, &settings.braces_on_struct_decl_line,       &exp_bls},
     {"blf",     PRO_BOOL,                           false,      OFF, &settings.braces_on_func_def_line,          &exp_blf},
@@ -362,6 +392,7 @@ const pro_ty pro[] =
 
 const pro_ty pro[] =
 {
+    {"zvr",     PRO_SETTINGS,                           0, ONOFF_NA, ZVR_SETTINGS_STRING,                        &exp_zvr},
     {"version", PRO_PRSTRING,                           0, ONOFF_NA, (int *) VERSION,                            &exp_version},
     {"v",       PRO_BOOL,                           false,       ON, &settings.verbose,                          &exp_v},
     {"ut",      PRO_BOOL,                            true,       ON, &settings.use_tabs,                         &exp_ut},
@@ -407,6 +438,7 @@ const pro_ty pro[] =
     {"neei",    PRO_BOOL,                           false,      OFF, &settings.extra_expression_indent,          &exp_eei},
     {"ndj",     PRO_BOOL,                           false,      OFF, &settings.ljust_decl,                       &exp_dj},
     {"ncs",     PRO_BOOL,                            true,      OFF, &settings.cast_space,                       &exp_cs},
+    {"ncpf",    PRO_BOOL,                            true,      OFF, &settings.chain_profiles,                   &exp_cpf},
     {"nce",     PRO_BOOL,                           false,      OFF, &settings.cuddle_else,                      &exp_ce},
     {"ncdw",    PRO_BOOL,                           false,      OFF, &settings.cuddle_do_while,                  &exp_cdw},
     {"ncdb",    PRO_BOOL,                           false,      OFF, &settings.comment_delimiter_on_blankline,   &exp_cdb},
@@ -440,6 +472,7 @@ const pro_ty pro[] =
     {"di",      PRO_INT,                                2, ONOFF_NA, &settings.decl_indent,                      &exp_di},
     {"d",       PRO_INT,                                0, ONOFF_NA, &settings.unindent_displace,                &exp_d},
     {"cs",      PRO_BOOL,                            true,       ON, &settings.cast_space,                       &exp_cs},
+    {"cpf",     PRO_BOOL,                            true,       ON, &settings.chain_profiles,                   &exp_cpf},
     {"cp",      PRO_INT,                                1, ONOFF_NA, &settings.else_endif_col,                   &exp_cp},
     {"cli",     PRO_INT,                                0, ONOFF_NA, &settings.case_indent,                      &exp_cli},
     {"ci",      PRO_INT,                                0, ONOFF_NA, &settings.continuation_indent,              &exp_ci},
@@ -483,6 +516,7 @@ typedef struct long_option_conversion
 
 const long_option_conversion_ty option_conversions[] =
 {
+    {"zavras-style",                                "zvr"},
     {"version",                                     "version"},
     {"verbose",                                     "v"},
     {"usage",                                       "h"},
@@ -504,6 +538,7 @@ const long_option_conversion_ty option_conversions[] =
 #ifdef PRESERVE_MTIME
     {"preserve-mtime",                              "pmt"},
 #endif
+    {"preprocessor-indentation",                    "ppi"},
     {"paren-indentation",                           "pi"},
     {"parameter-indentation",                       "ip"},
     {"output-file",                                 "o"},
@@ -561,6 +596,7 @@ const long_option_conversion_ty option_conversions[] =
     {"dont-format-comments",                        "nfca"},
     {"dont-cuddle-else",                            "nce"},
     {"dont-cuddle-do-while",                        "ncdw"},
+    {"dont-chain-profiles",                         "ncpf"},
     {"dont-break-procedure-type",                   "npsl"},
     {"dont-break-function-decl-args",               "nbfda"},
     {"dont-break-function-decl-args-end",           "nbfde"},
@@ -573,6 +609,7 @@ const long_option_conversion_ty option_conversions[] =
     {"comment-line-length",                         "lc"},
     {"comment-indentation",                         "c"},
     {"comment-delimiters-on-blank-lines",           "cdb"},
+    {"chain-profiles",                              "cpf"},
     {"case-indentation",                            "cli"},
     {"case-brace-indentation",                      "cbi"},
     {"c-plus-plus",                                 "c++"},
@@ -597,7 +634,6 @@ const long_option_conversion_ty option_conversions[] =
     {"berkeley-style",                              "orig"},
     {"berkeley",                                    "orig"},
     {"Bill-Shannon",                                "bs"},
-    {"preprocessor-indentation",                    "ppi"},
     /* Signify end of structure.  */
     {0,                                             0},
 };
@@ -1156,7 +1192,7 @@ static void scan_profile(
 #define PROFILE_ENV_NAME "INDENT_PROFILE"
 
 /**
- * set_profile looks for the profile file via
+ * set_one_profile looks for the profile file via
  * 1) the profile environment variable
  * 2) looks for ./.indent.pro
  * 3)  $HOME/.indent.pro
@@ -1166,7 +1202,7 @@ static void scan_profile(
  * Note that as of version 1.3, indent only reads one file. 
  */
 
-char * set_profile(void)
+char * set_one_profile(void)
 {
    FILE        * f       = NULL;
    char        * fname   = NULL;
@@ -1189,6 +1225,84 @@ char * set_profile(void)
         
          (void) fclose(f);
         
+         fname = strdup(envname);
+      }
+   }
+   else
+   {
+      f = fopen(INDENT_PROFILE, "r");
+        
+      if (f != NULL)
+      {
+         int len = strlen (INDENT_PROFILE) + 3;
+
+         scan_profile (f, INDENT_PROFILE);
+         (void) fclose (f);
+
+         fname = xmalloc (len);
+         strcpy(fname, "./");
+         (void) strcat (fname, INDENT_PROFILE);
+      }
+      else
+      {
+         homedir = getenv ("HOME");
+    
+         if (homedir)
+         {
+            fname = xmalloc (strlen (homedir) + strlen(PROFILE_FORMAT) + sizeof (prof));
+            sprintf (fname, PROFILE_FORMAT, homedir, prof);
+                
+            if ((f = fopen (fname, "r")) != NULL)
+            {
+               scan_profile (f, fname);
+               (void) fclose (f);
+            }
+            else
+            {
+               free (fname);
+               fname = NULL;
+            }
+         }
+      }
+   }
+    
+   return fname;
+}
+
+/**
+ * read_profile looks for the profile file via
+ * 1) the profile environment variable
+ * if this not set, then it checks
+ * 2.1)  ./.indent.pro
+ * 2.2)  $HOME/.indent.pro
+ *
+ * if the option "chain-profiles" is set,
+ * then both files (if existent) are read,
+ * with local settings overwriting home ones.
+ *
+ * Returns the names of the files read.
+ */
+
+char * read_profile(void)
+{
+   FILE        * f       = NULL;
+   char        * fname   = NULL;
+   static char   prof[]  = INDENT_PROFILE;
+   char        * homedir = NULL;
+   const char  * envname = getenv(PROFILE_ENV_NAME);
+
+   if (envname != NULL)
+   {
+      f = fopen(envname, "r");
+      if (f == NULL)
+      {
+         fatal(_("Profile file %s set by environment variable %s does not exist or is not readable"),
+               envname, PROFILE_ENV_NAME);
+      }
+      else
+      {
+         scan_profile(f, envname);
+         (void) fclose(f);
          fname = strdup(envname);
       }
    }

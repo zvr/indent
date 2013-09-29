@@ -1,4 +1,6 @@
 /** \file
+ * Copyright (c) 2013 Alexios Zavras.<br>
+ *
  * Copyright (c) 1999 Carlo Wood.  All rights reserved.<br>
  * Copyright (c) 1994 Joseph Arceneaux.  All rights reserved.<br>
  * Copyright (c) 1992, 2002, 2008 Free Software Foundation, Inc.  All rights reserved.<br>
@@ -318,6 +320,7 @@ typedef struct user_options_st
     int brace_indent; /*!< number of spaces to indent braces from the suround if, while, etc. in -bl
                        * (bype_2 == 0) code */
     int expect_output_file;  /*!< Means "-o" was specified. */
+    int chain_profiles;      /* more than one profiles can be read */
 } user_options_ty;
 
 extern user_options_ty settings;

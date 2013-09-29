@@ -1,4 +1,6 @@
 /** \file
+ * Copyright (c) 2013 Alexios Zavras. <br>
+ * 
  * Copyright (c) 1999, 2000 Carlo Wood.  All rights reserved. <br>
  * Copyright (c) 1994, 1996, 1997 Joseph Arceneaux.  All rights reserved. <br>
  * Copyright (c) 1992, 2002, 2008 Free Software Foundation, Inc.  All rights reserved. <br>
@@ -739,7 +741,7 @@ static char * handle_profile (
 
     if (i >= argc)
     {
-        profile_pathname = set_profile ();
+        profile_pathname = read_profile ();
     }
 
     return profile_pathname;
@@ -1046,7 +1048,7 @@ int main(
     {
         if (settings.verbose && profile_pathname)
         {
-            fprintf (stderr, _("Read profile %s\n"), profile_pathname);
+            fprintf (stderr, _("Read options from file %s\n"), profile_pathname);
         }
 
         set_defaults_after();
