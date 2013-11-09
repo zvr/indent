@@ -811,8 +811,6 @@ static void dump_line_code(
     BOOLEAN * pbreak_line,
     int       target_col_break)
 {
-   int paren_level   = 0;
-
    if (s_code != e_code)
    {                       /* print code section, if any */
       int i;
@@ -833,11 +831,6 @@ static void dump_line_code(
       else
       {
          target_col = compute_code_target (paren_targ);
-      }
-
-      if (paren_level > 0)
-      {
-         target_col += parser_state_tos->paren_indents[parser_state_tos->p_l_follow + paren_level- 1];
       }
 
      /* If a line ends in an lparen character, the following line should
@@ -903,8 +896,6 @@ static void dump_line_code(
          s_code[buf_break->offset] = '\0';
 
          *pcur_col = count_columns (*pcur_col, s_code, NULL_CHAR);
-
-         paren_level += count_parens(s_code);
 
          s_code[buf_break->offset] = c;
 
