@@ -1296,8 +1296,9 @@ char * read_profile(void)
       f = fopen(envname, "r");
       if (f == NULL)
       {
-         fatal(_("Profile file %s set by environment variable %s does not exist or is not readable"),
-               envname, PROFILE_ENV_NAME);
+         // fatal(_("Profile file %s set by environment variable %s does not exist or is not readable"), envname, PROFILE_ENV_NAME);
+         fatal(_("Profile file %s set by environment variable does not exist or is not readable"),
+               envname);
       }
       else
       {
